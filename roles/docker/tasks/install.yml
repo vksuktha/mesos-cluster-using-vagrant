@@ -1,0 +1,37 @@
+---
+#- name: Get Docker release tool key
+#  apt_key: keyserver=p80.pool.sks-keyservers.net id=58118E89F3A912897C070ADBF76221572C52609D state=present
+#  sudo: yes
+- name: Get docker release tool key
+  apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D  
+  register: add_repository_key
+  ignore_errors: true
+  sudo: true
+
+
+- name: Add Docker deb repository
+  apt_repository:
+    repo: "deb https://apt.dockerproject.org/repo ubuntu-{{docker_ubuntu_name}} main"
+    state: "present"
+    
+    update_cache: yes
+
+- name: Get kernel version
+  command: uname -r
+  register: docker_kernel_version
+  changed_when: False
+
+- name: Install linux-image-extra-$(uname -r)
+  apt:
+    name: "linux-image-extra-{{docker_kernel_version.stdout}}"
+    state: "present"
+
+
+# Install fixed version (http://www.ubuntuupdates.org/ppa/docker_new)
+- name: Install Docker
+  sudo: true
+  apt:
+    name: docker-engine
+    state: "latest"
+    update_cache: yes
+    force: yes
